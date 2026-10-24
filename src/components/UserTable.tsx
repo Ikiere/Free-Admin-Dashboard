@@ -1,23 +1,46 @@
-// *********************
-// Role of the component: User table component that displays the user table with the user name, email address, role, last login date, and actions
-// Name of the component: UserTable.tsx
-// Developer: Aleksandar Kuzmanovic
-// Version: 1.0
-// Component call: <UserTable />
-// Input parameters: no input parameters
-// Output: UserTable component that displays the user table with the user name, email address, role, last login date, and actions
-// *********************
-
-import { nanoid } from "nanoid";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { HiOutlinePencil } from "react-icons/hi";
-import { HiOutlineTrash } from "react-icons/hi";
-import { HiOutlineEye } from "react-icons/hi";
-import { userAdminItems } from "../utils/data";
+import { HiOutlinePencil, HiOutlineEye } from "react-icons/hi";
+import { api, UserItem } from "../services/api";
 
+const UserTable: React.FC = () => {
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
+  const loadUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.getUsers();
+      setUsers(data.users);
+    } catch (err: any) {
+      setError(err.message || "Failed to load users from backend");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const UserTable = () => {
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-12 text-center dark:text-gray-400 text-gray-600">
+        Loading registered users from backend...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-6 px-4 bg-red-500/10 border border-red-500/20 rounded text-red-400 my-4">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <table className="mt-6 w-full whitespace-nowrap text-left max-lg:block max-lg:overflow-x-scroll">
       <colgroup>
@@ -45,7 +68,7 @@ const UserTable = () => {
             scope="col"
             className="py-2 pl-0 pr-8 font-semibold table-cell lg:pr-20"
           >
-            Date
+            Joined
           </th>
           <th
             scope="col"
@@ -56,56 +79,47 @@ const UserTable = () => {
         </tr>
       </thead>
       <tbody className="divide-y divide-white/5">
-        {userAdminItems.map((item) => (
-          <tr key={nanoid()}>
+        {users.map((item) => (
+          <tr key={item.id}>
             <td className="py-4 pl-4 pr-8 sm:pl-6 lg:pl-8">
               <div className="flex items-center gap-x-4">
                 <img
-                  src={item.user.imageUrl}
+                  src={item.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}`}
                   alt=""
-                  className="h-8 w-8 rounded-full bg-gray-800"
+                  className="h-8 w-8 rounded-full bg-gray-800 object-cover"
                 />
                 <div className="truncate text-sm font-medium leading-6 dark:text-whiteSecondary text-blackPrimary">
-                  {item.user.name}
+                  {item.name}
                 </div>
               </div>
             </td>
             <td className="py-4 pl-0 pr-4 table-cell pr-8">
-              <div className="flex gap-x-3">
-                <div className="text-sm leading-6 py-1 dark:text-whiteSecondary text-blackPrimary">
-                  {item.email}
-                </div>
+              <div className="font-mono text-sm leading-6 dark:text-gray-400 text-gray-500">
+                {item.email}
               </div>
             </td>
             <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
-              <div className="flex items-center gap-x-2 justify-start">
-                <div className="dark:text-whiteSecondary text-blackPrimary block font-medium">
-                  {item.role}
-                </div>
-              </div>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
+                item.role === 'admin'
+                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                  : item.role === 'manager'
+                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+              }`}>
+                {item.role}
+              </span>
             </td>
-            <td className="py-4 pl-0 pr-8 text-sm leading-6 dark:text-whiteSecondary text-blackPrimary table-cell lg:pr-20">
-              {item.lastLogin}
+            <td className="py-4 pl-0 pr-8 text-sm leading-6 dark:text-gray-400 text-gray-500 table-cell lg:pr-20">
+              {new Date(item.createdAt).toLocaleDateString()}
             </td>
             <td className="py-4 pl-0 pr-4 text-right text-sm leading-6 dark:text-whiteSecondary text-blackPrimary table-cell pr-6 lg:pr-8">
               <div className="flex gap-x-1 justify-end">
                 <Link
-                  to="/users/1"
-                  className="dark:bg-blackPrimary dark:text-whiteSecondary text-blackPrimary border border-gray-600 w-8 h-8 block flex justify-center items-center cursor-pointer dark:hover:border-gray-500 hover:border-gray-400"
-                >
-                  <HiOutlinePencil className="text-lg" />
-                </Link>
-                <Link
-                  to="/users/1"
-                  className="dark:bg-blackPrimary bg-whiteSecondary dark:text-whiteSecondary text-blackPrimary border border-gray-600 w-8 h-8 block flex justify-center items-center cursor-pointer dark:hover:border-gray-500 hover:border-gray-400"
+                  to={`/users/${item.id}`}
+                  className="dark:bg-blackPrimary bg-whiteSecondary dark:text-whiteSecondary text-blackPrimary border border-gray-600 w-8 h-8 block flex justify-center items-center cursor-pointer hover:border-gray-400"
+                  title="View User"
                 >
                   <HiOutlineEye className="text-lg" />
-                </Link>
-                <Link
-                  to="#"
-                  className="dark:bg-blackPrimary bg-whiteSecondary dark:text-whiteSecondary text-blackPrimary border border-gray-600 w-8 h-8 block flex justify-center items-center cursor-pointer dark:hover:border-gray-500 hover:border-gray-400"
-                >
-                  <HiOutlineTrash className="text-lg" />
                 </Link>
               </div>
             </td>
@@ -115,4 +129,5 @@ const UserTable = () => {
     </table>
   );
 };
+
 export default UserTable;

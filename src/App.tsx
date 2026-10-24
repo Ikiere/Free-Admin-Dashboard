@@ -23,7 +23,9 @@ import {
   Register,
   Reviews,
   Users,
+  SupabaseSettings,
 } from "./pages";
+
 const router = createBrowserRouter([
   {
     path: "/login",
@@ -117,8 +119,11 @@ const router = createBrowserRouter([
         path: "/profile",
         element: <Profile />,
       },
+      {
+        path: "/supabase-settings",
+        element: <SupabaseSettings />,
+      },
     ],
-    
   },
 ]);
 

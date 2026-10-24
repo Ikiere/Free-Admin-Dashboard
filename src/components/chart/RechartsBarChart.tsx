@@ -69,7 +69,7 @@ const RechartsBarChart = () => {
 
 export default RechartsBarChart;
 
-const CustomTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: any; label?: any }) => {
   if (active && payload && payload.length) {
     return (
       <div className="p-4 bg-slate-900 flex flex-col gap-4 rounded-md">

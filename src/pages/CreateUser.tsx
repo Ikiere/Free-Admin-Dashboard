@@ -1,107 +1,140 @@
-import { AiOutlineSave } from "react-icons/ai";
+import React, { useState } from "react";
 import { HiOutlineSave } from "react-icons/hi";
-import {
-  ImageUpload,
-  InputWithLabel,
-  Sidebar,
-  SimpleInput,
-  WhiteButton,
-} from "../components";
-import SelectInput from "../components/SelectInput";
-import { roles } from "../utils/data";
+import { Sidebar } from "../components";
+import { useNavigate } from "react-router-dom";
+import { api } from "../services/api";
 
-const CreateUser = () => {
+const CreateUser: React.FC = () => {
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"admin" | "manager" | "user">("user");
+  const [status, setStatus] = useState<"active" | "suspended" | "pending">("active");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim()) {
+      setError("Please fill in user name and email address.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.createUser({
+        name: name.trim(),
+        email: email.trim(),
+        role,
+        status,
+        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name.trim())}`
+      });
+      navigate("/users");
+    } catch (err: any) {
+      setError(err.message || "Failed to create user");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="h-auto border-t border-blackSecondary border-1 flex dark:bg-blackPrimary bg-whiteSecondary">
       <Sidebar />
-      <div className="dark:bg-blackPrimary bg-whiteSecondary w-full ">
-        <div className="dark:bg-blackPrimary bg-whiteSecondary py-10">
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 border-b border-gray-800 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
-            <div className="flex flex-col gap-3">
+      <div className="dark:bg-blackPrimary bg-whiteSecondary w-full min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+        <form onSubmit={handleSubmit}>
+          <div className="pb-8 border-b border-gray-800 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
+            <div>
               <h2 className="text-3xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
                 Add new user
               </h2>
+              <p className="text-sm dark:text-gray-400 text-gray-600 mt-1">
+                Creates an institutional account synchronized with backend and Supabase.
+              </p>
             </div>
-            <div className="flex gap-x-2 max-[370px]:flex-col max-[370px]:gap-2 max-[370px]:items-center">
-              <button className="dark:bg-blackPrimary bg-whiteSecondary border border-gray-600 w-48 py-2 text-lg dark:hover:border-gray-500 hover:border-gray-400 duration-200 flex items-center justify-center gap-x-2">
-                <AiOutlineSave className="dark:text-whiteSecondary text-blackPrimary text-xl" />
-                <span className="dark:text-whiteSecondary text-blackPrimary font-medium">
-                  Save draft
-                </span>
-              </button>
-              <WhiteButton
-                link="/users/create-user"
-                textSize="lg"
-                width="48"
-                py="2"
-                text="Publish user"
+            <div className="flex gap-x-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="dark:bg-whiteSecondary bg-blackPrimary text-white dark:text-black font-semibold px-6 py-2.5 rounded text-base hover:opacity-90 transition-opacity flex items-center gap-2"
               >
-                <HiOutlineSave className="dark:text-blackPrimary text-whiteSecondary text-xl" />
-              </WhiteButton>
+                <HiOutlineSave className="text-xl" />
+                <span>{submitting ? "Publishing..." : "Publish User"}</span>
+              </button>
             </div>
           </div>
 
-          {/* Add Product section here  */}
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 pt-8 grid grid-cols-2 gap-x-10 max-xl:grid-cols-1 max-xl:gap-y-10">
-            {/* left div */}
+          {error && (
+            <div className="mt-4 p-4 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="pb-8 pt-8 max-w-2xl space-y-6">
             <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                User information
-              </h3>
+              <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Elena Rostova"
+                className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+              />
+            </div>
 
-              <div className="mt-4 flex flex-col gap-5">
-                <InputWithLabel label="Name">
-                  <SimpleInput
-                    type="text"
-                    placeholder="Enter a name..."
-                  />
-                </InputWithLabel>
+            <div>
+              <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                Email Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. elena@geneva-capital.ch"
+                className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+              />
+            </div>
 
-                <InputWithLabel label="Lastname">
-                  <SimpleInput
-                    type="text"
-                    placeholder="Enter a lastname..."
-                  />
-                </InputWithLabel>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  System Role
+                </label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as any)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                >
+                  <option value="user">User / Customer</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
 
-                <InputWithLabel label="Email">
-                  <SimpleInput
-                    type="text"
-                    placeholder="Enter a email ..."
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Password">
-                  <SimpleInput
-                    type="password"
-                    placeholder="Enter a password..."
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Confirm password">
-                  <SimpleInput
-                    type="password"
-                    placeholder="Enter a confirm password..."
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Select role">
-                  <SelectInput selectList={roles} />
-                </InputWithLabel>
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Account Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as any)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                >
+                  <option value="active">Active</option>
+                  <option value="pending">Pending Verification</option>
+                  <option value="suspended">Suspended</option>
+                </select>
               </div>
             </div>
-
-            {/* right div */}
-            <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Upload user image
-              </h3>
-              <ImageUpload />
-            </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 };
+
 export default CreateUser;

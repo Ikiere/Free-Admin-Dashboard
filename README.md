@@ -1,105 +1,120 @@
-<h1>Free admin dashboard developed in React.js, Tailwind CSS and TypeScript</h1>
+# Free Admin Dashboard & Safe Supabase API Gateway
 
-<p><b>Free admin dashboard</b> is an open-source admin template designed in Figma and developed in React.js, Tailwind CSS and TypeScript. My goal in this project is to deliver a high-quality and premium design dashboard template by following the best React.js practices. This <b>React admin dashboard</b> is created using advanced React.js design patterns like controlled and uncontrolled components design patterns, custom hooks patterns, layout components patterns, component composition patterns, compound components design patterns and many more… This is mainly an eCommerce dashboard template, but in the future if the repository becomes popular, I will expand it to more niches. The dashboard is completely responsive, and it is available for <b>free download</b>.</p>
+A full-stack, enterprise-grade eCommerce Admin Dashboard and secure Backend API Gateway built with **React 18**, **TypeScript**, **Tailwind CSS**, and **Node.js/Express**, featuring **zero-leakage safe Supabase database integration**.
 
-<h2>More work</h2>
-<a href="https://github.com/Kuzma02/VSD-Official-Website" target="_blank">Car Parts Company Official Website in Next.js</a><br />
-<a href="https://github.com/Kuzma02/Luxury-Cosmetics-eCommerce-NextJS" target="_blank">Luxury Cosmetics eCommerce Shop in Next.js</a><br />
-<a href="https://github.com/Kuzma02/Electronics-eCommerce-Shop-With-Admin-Dashboard-NextJS-NodeJS" target="_blank">Electronics eCommerce Shop With Admin Dashboard in Next.js and Node.js</a><br />
-<a href="https://github.com/Kuzma02/Fashion-eCommerce-Shop-in-React" target="_blank">Premium Fashion eCommerce Shop</a>
+---
 
-<h2>Admin dashboard design</h2>
-  
-<p><b>Admin dashboard design</b> is designed in Figma by following foundational and best practices for e-commerce dashboard UI design. My goal is to create it as simple as possible and with a premium user interface. The complete design is created with the end user in mind. You can use the admin panel template for any type of eCommerce website, you only need to connect it with the back end, and everything will work smoothly. <b>The admin panel for the eCommerce website</b> is fully <b>open source</b>, which means you can easily add more features if you want to. The admin dashboard template source code is written by following the best practices, so you won’t have problems with it. The <b>react dashboard</b> is completely customizable and flexible, so you can easily make it yours. The admin panel design is designed by following the best design practices like visual hierarchy, proximity, white space, consistency, contrast and many more…</p>
+## ⚡ What Makes This Safe for Supabase?
 
-<h3>Features</h3>
-<ul>
-  <li>High-quality design: High-quality design created with the end user in mind.</li>
-  <li>Responsive Design: Fully responsive layout that works seamlessly on desktops, tablets, and mobile devices.</li>
-  <li>Dynamic Charts and Graphs: Interactive data visualization using libraries Chart.js</li>
-  <li>Modular Components: Reusable and customizable components for different sections of the dashboard.</li>
-  <li>Theme Customization: Light and dark mode support with customizable themes.</li>
-  <li>Data Tables: Advanced data tables with sorting, filtering, and pagination.</li>
-</ul>
+Unlike traditional frontend-only templates that expose Supabase connection keys or database credentials in client-side JavaScript bundles, **this architecture introduces a zero-leakage security boundary**:
 
-<h3>Technologies Used</h3>
-<ul>
-  <li>React.js: JavaScript library for building user interfaces.</li>
-  <li>Redux Toolkit: State management library for React applications.</li>
-  <li>React Router: Library for routing in React applications.</li>
-  <li>Chart.js: Simple yet flexible JavaScript charting library.</li>
-  <li>Tailwind CSS: A utility-first CSS framework for rapidly building custom user interfaces.</li>
-  <li>TypeScript: A language for application-scale JavaScript.</li>
-  <li>Nanoid: A tiny, secure, URL-friendly, unique string ID generator</li>
-  <li>React icons: Icon library with lots of icons</li>
-  <li>Figma: Powerful web design tool.</li>
-</ul>
+1. **Backend Vault Encryption (AES-256-GCM)**: Sensitive credentials (including the Supabase `service_role` key and direct connection strings) are transmitted only to the secure backend and encrypted using AES-256-GCM with PBKDF2 key derivation.
+2. **Server-Side API Proxying**: The browser only communicates with `/api/products`, `/api/categories`, `/api/orders`, `/api/supabase/...`. No client ever accesses the Supabase administrative keys directly.
+3. **Dual Storage Engine**:
+   - **Cloud Supabase**: When credentials are connected, queries are executed server-side against your Supabase PostgreSQL instance.
+   - **Local Resilient Vault**: When Supabase is not connected or during offline local development, the backend automatically falls back to a resilient, seeded local store, ensuring the dashboard never crashes.
+4. **Automated Schema Provisioning**: View, copy, and run the complete SQL migration directly in your Supabase SQL Editor with full Row-Level Security (RLS) policies and performance indexes.
 
-<b>If you like the free admin dashboard project give it a star on GitHub to support the project and give me the motivation to add many more great features.</b>
+---
 
-<h2>Video instructions for running the app</h2>
-<p>Here is a YouTube link for the video instructions for running the app: <a href="https://www.youtube.com/watch?v=cydXOmMhbtQ">https://www.youtube.com/watch?v=cydXOmMhbtQ</a></p>
-
-<h2>Instructions</h2>
-  <p>1. To run the app you first need to download and install Node.js and npm on your computer. Here is a link to the tutorial that explains how to install them: <a href="https://www.youtube.com/watch?v=4FAtFwKVhn0">https://www.youtube.com/watch?v=4FAtFwKVhn0</a>. Also here is the link where you can download them: <a href="https://nodejs.org/en">https://nodejs.org/en</a></p>
-  <p>2. When you install all the programs you need on your computer you need to download the project. When you download the project, you need to extract it.</p>
-  <p>3. After you extract the project you need to open the project folder in your terminal of choice and write:</p>
+## 🏗️ Project Structure
 
 ```
+Free-Admin-Dashboard/
+├── backend/                        # Node.js + Express + TypeScript Backend
+│   ├── src/
+│   │   ├── config/env.ts          # Environment variables & master vault key
+│   │   ├── controllers/           # Products, Categories, Orders, Users, Supabase, Auth, Stats
+│   │   ├── data/
+│   │   │   ├── initialSeed.ts     # Rich eCommerce catalog & user seeds
+│   │   │   └── supabase-schema.sql# PostgreSQL DDL with RLS policies & indexes
+│   │   ├── middleware/            # JWT auth, error handlers, rate limiting
+│   │   ├── routes/                # REST API routers (/api/...)
+│   │   ├── services/
+│   │   │   ├── auth.service.ts    # JWT & bcrypt authentication
+│   │   │   ├── repository.service.ts # Dual-mode (Supabase / local store)
+│   │   │   ├── supabase.service.ts   # Connection manager & table health checker
+│   │   │   └── vault.service.ts   # AES-256-GCM cryptographic vault
+│   │   └── index.ts               # Express server entrypoint
+│   ├── .env.example
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── src/                           # React 18 Admin Dashboard UI
+│   ├── components/                # Modular UI components, Chart.js & Recharts
+│   ├── pages/
+│   │   ├── SupabaseSettings.tsx   # Dedicated Safe Supabase Management Console
+│   │   ├── Products.tsx, CreateProduct.tsx, EditProduct.tsx
+│   │   ├── Categories.tsx, CreateCategory.tsx
+│   │   ├── Orders.tsx, CreateOrder.tsx
+│   │   ├── Users.tsx, CreateUser.tsx
+│   │   ├── Reviews.tsx, CreateReview.tsx
+│   │   ├── Landing.tsx, LandingV2.tsx
+│   │   └── Login.tsx, Register.tsx
+│   ├── services/
+│   │   └── api.ts                 # Type-safe API client with JWT interceptor
+│   └── App.tsx                    # React Router configuration
+├── package.json
+├── tailwind.config.js
+└── vite.config.ts                 # Configured with proxy to backend /api
+```
+
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Install Dependencies
+
+```bash
+# Install frontend dependencies
 npm install
+
+# Install backend dependencies
+cd backend && npm install && cd ..
 ```
 
-<p>4. To run the project write:</p>
+### 2. Start the Backend API Server
 
-```
+```bash
+cd backend
 npm run dev
 ```
 
-<p>5. To see your app go to your browser of choice and in the URL write: <a href="http://localhost:5173">http://localhost:5173</a></p>
+The backend starts at `http://localhost:5000` with live health check at `http://localhost:5000/api/health`.
 
+### 3. Start the Admin Dashboard UI
 
-![landing black](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/d0351603-0aa1-4c5c-8520-fcce064be708)
+In a separate terminal:
 
-![landing white](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/6d2e522d-7c08-4a28-bdb9-7e4511a75dd4)
+```bash
+npm run dev
+```
 
-![landing v2 black](https://github.com/user-attachments/assets/63392f58-2690-4a41-8244-f1f8690bf4e5)
+Open `http://localhost:3001` (or `http://localhost:5173`) in your browser.
 
-![landing v2 white](https://github.com/user-attachments/assets/8e22349c-5ff1-4a97-8042-1c012df32b33)
+---
 
-![all product black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/5d1b58d5-7bae-452e-b6a2-e29643508d2e)
+## 🔒 Connecting Your Supabase Project Safely
 
-![all products white full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/224113dc-25a0-4e41-9b8b-687da058f932)
+1. Log into your Supabase Dashboard: [https://supabase.com/dashboard](https://supabase.com/dashboard).
+2. Go to **Project Settings &rarr; API** and copy:
+   - **Project URL** (`https://<project-ref>.supabase.co`)
+   - **anon / public key**
+   - **service_role key**
+3. In the Admin Dashboard, navigate to **Supabase DB** in the sidebar.
+4. Paste your credentials and click **Test Connection**.
+5. Click **Save & Connect Supabase**. Credentials are encrypted immediately via AES-256-GCM.
+6. Copy the SQL script provided on the page and paste it into **Supabase SQL Editor &rarr; Run** to create tables, indexes, and RLS policies.
 
-![create product black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/28f26062-17b3-4059-b1b5-13ad6170279c)
+---
 
-![create product white full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/790c9cb7-ba1e-4b7d-a222-f90c3911738d)
+## 🛡️ Default Development Credentials
 
-![all categories black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/0affe13e-00c8-4f9e-87f3-561a7d3a3b29)
+- **Admin Email**: `admin@accessglobal.io`
+- **Password**: `AdminPass123!`
 
-![create category black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/7cd2f905-376a-4f93-9d91-e8658541b2cd)
+---
 
-![all orders black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/8ca89bab-47cd-4fc0-b3e8-2a9af12cd2aa)
+## 📜 License
 
-![create order black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/4b266e65-6749-4beb-bcf8-9defe36e1a2b)
-
-![all user black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/8cb67398-fedc-41a3-8093-10bea6ba48cb)
-
-![create user black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/9dc47045-23df-4299-b99f-aa0a7c648583)
-
-![all reviews black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/014b1169-5927-47a5-a3ed-384370490422)
-
-![create review black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/9199d3bb-dcc9-46c1-9a39-e2ea1f9582c5)
-
-![help desk black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/09667c43-9dbc-40e0-96da-b14b53076fad)
-
-![profile black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/f633a5b8-f382-4916-aca0-e587205af4c5)
-
-![notifications black full](https://github.com/Kuzma02/Free-Admin-Dashboard/assets/138793624/de265e28-eb51-448b-9540-b7fb78a9db6e)
-
-![register black](https://github.com/user-attachments/assets/be3ece3b-2aed-4e1a-82b5-47e9e8845619)
-
-![register white](https://github.com/user-attachments/assets/2aaf7d96-c721-4383-a546-dfb147c45896)
-
-![login black](https://github.com/user-attachments/assets/988da627-0449-430c-996e-f2dbd5f128b5)
-
-![login white](https://github.com/user-attachments/assets/ee5defb4-931d-484b-8c60-ecc38ae58f8d)
+MIT License - Open Source.

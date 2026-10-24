@@ -1,181 +1,222 @@
-import { ImageUpload, InputWithLabel, Sidebar } from "../components";
+import React, { useState } from "react";
+import { Sidebar } from "../components";
 import { HiOutlineSave } from "react-icons/hi";
-import { Link } from "react-router-dom";
-import { AiOutlineSave } from "react-icons/ai";
-import SimpleInput from "../components/SimpleInput";
-import TextAreaInput from "../components/TextAreaInput";
-import SelectInput from "../components/SelectInput";
-import { selectList, stockStatusList } from "../utils/data";
+import { useNavigate } from "react-router-dom";
+import { api } from "../services/api";
 
-const CreateProduct = () => {
+const CreateProduct: React.FC = () => {
+  const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Smartphones & Mobile");
+  const [price, setPrice] = useState("499.00");
+  const [inStock, setInStock] = useState("1");
+  const [manufacturer, setManufacturer] = useState("AccessTech");
+  const [mainImage, setMainImage] = useState(
+    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80"
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !price || !category) {
+      setError("Please fill in all required fields (Title, Price, Category).");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.createProduct({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        price: parseFloat(price),
+        inStock: parseInt(inStock, 10),
+        manufacturer: manufacturer.trim() || "AccessTech",
+        mainImage: mainImage.trim(),
+        rating: 5.0,
+        popularity: 50
+      });
+      navigate("/products");
+    } catch (err: any) {
+      setError(err.message || "Failed to create product");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="h-auto border-t border-blackSecondary border-1 flex dark:bg-blackPrimary bg-whiteSecondary">
       <Sidebar />
-      <div className="hover:bg-blackPrimary bg-whiteSecondary w-full ">
-        <div className="dark:bg-blackPrimary bg-whiteSecondary py-10">
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 border-b border-gray-800 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
-            <div className="flex flex-col gap-3">
+      <div className="hover:bg-blackPrimary bg-whiteSecondary w-full min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+        <form onSubmit={handleSubmit}>
+          <div className="pb-8 border-b border-gray-800 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
+            <div>
               <h2 className="text-3xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
                 Add new product
               </h2>
+              <p className="text-sm dark:text-gray-400 text-gray-600 mt-1">
+                Product will be safely stored in the backend & synced to Supabase.
+              </p>
             </div>
-            <div className="flex gap-x-2 max-[370px]:flex-col max-[370px]:gap-2 max-[370px]:items-center">
-              <button className="dark:bg-blackPrimary bg-whiteSecondary border border-gray-600 w-48 py-2 text-lg dark:hover:border-gray-500 hover:border-gray-400 duration-200 flex items-center justify-center gap-x-2">
-                <AiOutlineSave className="dark:text-whiteSecondary text-blackPrimary text-xl" />
-                <span className="dark:text-whiteSecondary text-blackPrimary font-medium">
-                  Save draft
-                </span>
-              </button>
-              <Link
-                to="/products/add-product"
-                className="dark:bg-whiteSecondary bg-blackPrimary w-48 py-2 text-lg dark:hover:bg-white hover:bg-black duration-200 flex items-center justify-center gap-x-2"
+            <div className="flex gap-x-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="dark:bg-whiteSecondary bg-blackPrimary text-white dark:text-black font-semibold px-6 py-2.5 rounded text-base hover:opacity-90 transition-opacity flex items-center gap-2"
               >
-                <HiOutlineSave className="dark:text-blackPrimary text-whiteSecondary text-xl" />
-                <span className="dark:text-blackPrimary text-whiteSecondary font-semibold">
-                  Publish product
-                </span>
-              </Link>
+                <HiOutlineSave className="text-xl" />
+                <span>{submitting ? "Publishing..." : "Publish Product"}</span>
+              </button>
             </div>
           </div>
 
-          {/* Add Product section here  */}
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 pt-8 grid grid-cols-2 gap-x-10 max-xl:grid-cols-1 max-xl:gap-y-10">
-            {/* left div */}
-            <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Basic information
+          {error && (
+            <div className="mt-4 p-4 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="pb-8 pt-8 grid grid-cols-2 gap-x-10 max-xl:grid-cols-1 max-xl:gap-y-10">
+            {/* Left Column: Form Details */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
+                Basic Information
               </h3>
 
-              <div className="mt-4 flex flex-col gap-5">
-                <InputWithLabel label="Title">
-                  <SimpleInput
-                    type="text"
-                    placeholder="Enter a product title..."
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Description">
-                  <TextAreaInput
-                    placeholder="Enter a product description..."
-                    rows={4}
-                    cols={50}
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Category">
-                  <SelectInput selectList={selectList} />
-                </InputWithLabel>
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Product Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. ApexBook Pro 16-inch M-Max"
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                />
               </div>
 
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary mt-16">
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                >
+                  <option value="Smartphones & Mobile">Smartphones & Mobile</option>
+                  <option value="Laptops & Workstations">Laptops & Workstations</option>
+                  <option value="Audio & Acoustics">Audio & Acoustics</option>
+                  <option value="Wearables & Smartwatches">Wearables & Smartwatches</option>
+                  <option value="Cameras & Optics">Cameras & Optics</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Manufacturer / Brand
+                </label>
+                <input
+                  type="text"
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  placeholder="e.g. AccessTech"
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Description
+                </label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter detailed technical specs and overview..."
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <h3 className="text-xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary pt-4">
                 Pricing & Inventory
               </h3>
 
-              <div className="mt-4 flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-x-5 max-[500px]:grid-cols-1 max-[500px]:gap-x-0 max-[500px]:gap-y-5">
-                  <InputWithLabel label="Base pricing">
-                    <SimpleInput
-                      type="number"
-                      placeholder="Enter a product base pricing..."
-                    />
-                  </InputWithLabel>
-
-                  <InputWithLabel label="Price with dicount">
-                    <SimpleInput
-                      type="number"
-                      placeholder="Enter a price with discount..."
-                    />
-                  </InputWithLabel>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                    Price ($) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-5 max-[500px]:grid-cols-1 max-[500px]:gap-x-0 max-[500px]:gap-y-5">
-                  <InputWithLabel label="Stock">
-                    <SimpleInput
-                      type="number"
-                      placeholder="Enter a product stock..."
-                    />
-                  </InputWithLabel>
-
-                  <InputWithLabel label="SKU">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product SKU..."
-                    />
-                  </InputWithLabel>
-                </div>
-                <InputWithLabel label="Stock status">
-                  <SelectInput selectList={stockStatusList} />
-                </InputWithLabel>
-              </div>
-
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary mt-16">
-                Delivery
-              </h3>
-
-              <div className="mt-4 flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-x-5 gap-y-5 max-[500px]:grid-cols-1 max-[500px]:gap-x-0 max-[500px]:gap-y-5">
-                  <InputWithLabel label="Weight (kg)">
-                    <SimpleInput
-                      type="number"
-                      placeholder="Enter a product weight..."
-                    />
-                  </InputWithLabel>
-                  <InputWithLabel label="Length (cm)">
-                    <SimpleInput
-                      type="number"
-                      placeholder="Enter a product length..."
-                    />
-                  </InputWithLabel>
-                  <InputWithLabel label="Width (cm)">
-                    <SimpleInput
-                      type="number"
-                      placeholder="Enter a product width..."
-                    />
-                  </InputWithLabel>
-                  <InputWithLabel label="Height (cm)">
-                    <SimpleInput
-                      type="number"
-                      placeholder="Enter a product height..."
-                    />
-                  </InputWithLabel>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary mt-16">
-                  SEO
-                </h3>
-
-                <div className="mt-4 flex flex-col gap-5">
-                  <InputWithLabel label="Meta title">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a meta title..."
-                    />
-                  </InputWithLabel>
-
-                  <InputWithLabel label="Meta description">
-                    <TextAreaInput
-                      placeholder="Enter a meta description..."
-                      rows={4}
-                      cols={50}
-                    />
-                  </InputWithLabel>
+                <div>
+                  <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                    Stock Status
+                  </label>
+                  <select
+                    value={inStock}
+                    onChange={(e) => setInStock(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                  >
+                    <option value="1">In Stock</option>
+                    <option value="0">Out of Stock</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* right div */}
-            <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Product images
+            {/* Right Column: Media Preview */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
+                Product Image & Media
               </h3>
 
-              <ImageUpload />
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Image URL
+                </label>
+                <input
+                  type="url"
+                  value={mainImage}
+                  onChange={(e) => setMainImage(e.target.value)}
+                  placeholder="https://images.unsplash.com/photo-..."
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500 text-sm"
+                />
+              </div>
+
+              <div className="border dark:border-gray-700 border-gray-300 rounded-lg p-4 dark:bg-zinc-800/40 bg-gray-50 flex flex-col items-center justify-center">
+                <span className="text-xs font-semibold dark:text-gray-400 text-gray-500 mb-3 uppercase tracking-wider">
+                  Live Preview
+                </span>
+                <img
+                  src={mainImage}
+                  alt="Product Preview"
+                  className="w-64 h-64 object-cover rounded-lg shadow-md border dark:border-gray-700 border-gray-200"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600";
+                  }}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 };
+
 export default CreateProduct;

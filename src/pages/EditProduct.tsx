@@ -1,307 +1,245 @@
-import { ImageUpload, InputWithLabel, Sidebar } from "../components";
+import React, { useState, useEffect } from "react";
+import { Sidebar } from "../components";
 import { HiOutlineSave } from "react-icons/hi";
-import { Link } from "react-router-dom";
-import { AiOutlineSave } from "react-icons/ai";
-import SimpleInput from "../components/SimpleInput";
-import TextAreaInput from "../components/TextAreaInput";
-import SelectInput from "../components/SelectInput";
-import { selectList, stockStatusList } from "../utils/data";
-import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { api } from "../services/api";
 
-const EditProduct = () => {
-  const [inputObject, setInputObject] = useState({
-    title: "Samsung Galaxy Tab A7 Lite",
-    description: "This is demo description for Samsung Galaxy Tab A7 Lite.",
-    category: selectList[0].value,
-    basePrice: "$100",
-    discountPrice: "$80",
-    stock: "50",
-    sku: "SK-2323-2323",
-    stockStatus: stockStatusList[0].value,
-    weight: "500g",
-    length: "600cm",
-    width: "600cm",
-    height: "400cm",
-    metaTitle: "Samsung Galaxy Tab A7 Lite - Demo Title",
-    metaDescription: "Samsung Galaxy Tab A7 Lite - Demo Description",
-  });
+const EditProduct: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Smartphones & Mobile");
+  const [price, setPrice] = useState("0");
+  const [inStock, setInStock] = useState("1");
+  const [manufacturer, setManufacturer] = useState("");
+  const [mainImage, setMainImage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { product } = await api.getProduct(id);
+        setTitle(product.title);
+        setDescription(product.description || "");
+        setCategory(product.category);
+        setPrice(String(product.price));
+        setInStock(String(product.inStock));
+        setManufacturer(product.manufacturer || "");
+        setMainImage(product.mainImage || "");
+      } catch (err: any) {
+        setError(err.message || "Failed to load product");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !title.trim() || !price) {
+      setError("Please fill in title and price.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.updateProduct(id, {
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        price: parseFloat(price),
+        inStock: parseInt(inStock, 10),
+        manufacturer: manufacturer.trim(),
+        mainImage: mainImage.trim()
+      });
+      navigate("/products");
+    } catch (err: any) {
+      setError(err.message || "Failed to update product");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="h-auto border-t border-blackSecondary border-1 flex dark:bg-blackPrimary bg-whiteSecondary">
+        <Sidebar />
+        <div className="dark:bg-blackPrimary bg-whiteSecondary w-full min-h-screen py-20 text-center dark:text-gray-400 text-gray-600">
+          Loading product details...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-auto border-t border-blackSecondary border-1 flex dark:bg-blackPrimary bg-whiteSecondary">
       <Sidebar />
-      <div className="dark:bg-blackPrimary bg-whiteSecondary w-full ">
-        <div className="dark:bg-blackPrimary bg-whiteSecondary py-10">
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 border-b border-gray-800 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
-            <div className="flex flex-col gap-3">
+      <div className="dark:bg-blackPrimary bg-whiteSecondary w-full min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+        <form onSubmit={handleSubmit}>
+          <div className="pb-8 border-b border-gray-800 flex justify-between items-center max-sm:flex-col max-sm:gap-5">
+            <div>
               <h2 className="text-3xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
                 Edit product
               </h2>
+              <p className="text-sm dark:text-gray-400 text-gray-600 mt-1">
+                Updates will be securely synced with backend and Supabase.
+              </p>
             </div>
-            <div className="flex gap-x-2 max-[370px]:flex-col max-[370px]:gap-2 max-[370px]:items-center">
-              <button className="dark:bg-blackPrimary bg-whiteSecondary border border-gray-600 w-48 py-2 text-lg dark:hover:border-gray-500 hover:border-gray-400 duration-200 flex items-center justify-center gap-x-2">
-                <AiOutlineSave className="dark:text-whiteSecondary text-blackPrimary text-xl" />
-                <span className="dark:text-whiteSecondary text-blackPrimary font-medium">
-                  Save draft
-                </span>
-              </button>
-              <Link
-                to="/products/add-product"
-                className="dark:bg-whiteSecondary bg-blackPrimary w-48 py-2 text-lg dark:hover:bg-white hover:bg-blackSecondary duration-200 flex items-center justify-center gap-x-2"
+            <div className="flex gap-x-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="dark:bg-whiteSecondary bg-blackPrimary text-white dark:text-black font-semibold px-6 py-2.5 rounded text-base hover:opacity-90 transition-opacity flex items-center gap-2"
               >
-                <HiOutlineSave className="dark:text-blackPrimary text-whiteSecondary text-xl" />
-                <span className="dark:text-blackPrimary text-whiteSecondary font-semibold">
-                  Update product
-                </span>
-              </Link>
+                <HiOutlineSave className="text-xl" />
+                <span>{submitting ? "Saving..." : "Update Product"}</span>
+              </button>
             </div>
           </div>
 
-          {/* Add Product section here  */}
-          <div className="px-4 sm:px-6 lg:px-8 pb-8 pt-8 grid grid-cols-2 gap-x-10 max-xl:grid-cols-1 max-xl:gap-y-10">
-            {/* left div */}
-            <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Basic information
+          {error && (
+            <div className="mt-4 p-4 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="pb-8 pt-8 grid grid-cols-2 gap-x-10 max-xl:grid-cols-1 max-xl:gap-y-10">
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
+                Basic Information
               </h3>
 
-              <div className="mt-4 flex flex-col gap-5">
-                <InputWithLabel label="Title">
-                  <SimpleInput
-                    type="text"
-                    placeholder="Enter a product title..."
-                    value={inputObject.title}
-                    onChange={(e) =>
-                      setInputObject({ ...inputObject, title: e.target.value })
-                    }
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Description">
-                  <TextAreaInput
-                    placeholder="Enter a product description..."
-                    rows={4}
-                    cols={50}
-                    value={inputObject.description}
-                    onChange={(e) =>
-                      setInputObject({
-                        ...inputObject,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                </InputWithLabel>
-
-                <InputWithLabel label="Category">
-                  <SelectInput
-                    selectList={selectList}
-                    value={inputObject.category}
-                    onChange={(e) =>
-                      setInputObject({
-                        ...inputObject,
-                        category: e.target.value,
-                      })
-                    }
-                  />
-                </InputWithLabel>
-              </div>
-
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary mt-16">
-                Pricing & Inventory
-              </h3>
-
-              <div className="mt-4 flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-x-5 max-[500px]:grid-cols-1 max-[500px]:gap-x-0 max-[500px]:gap-y-5">
-                  <InputWithLabel label="Base pricing">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product base pricing..."
-                      value={inputObject.basePrice}
-                      onChange={(e) =>
-                        setInputObject({
-                          ...inputObject,
-                          basePrice: e.target.value,
-                        })
-                      }
-                    />
-                  </InputWithLabel>
-
-                  <InputWithLabel label="Price with dicount">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a price with discount..."
-                      value={inputObject.discountPrice}
-                      onChange={(e) =>
-                        setInputObject({
-                          ...inputObject,
-                          discountPrice: e.target.value,
-                        })
-                      }
-                    />
-                  </InputWithLabel>
-                </div>
-
-                <div className="grid grid-cols-2 gap-x-5 max-[500px]:grid-cols-1 max-[500px]:gap-x-0 max-[500px]:gap-y-5">
-                  <InputWithLabel label="Stock">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product stock..."
-                      value={inputObject.stock}
-                      onChange={(e) =>
-                        setInputObject({
-                          ...inputObject,
-                          stock: e.target.value,
-                        })
-                      }
-                    />
-                  </InputWithLabel>
-
-                  <InputWithLabel label="SKU">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product SKU..."
-                      value={inputObject.sku}
-                      onChange={(e) =>
-                        setInputObject({
-                          ...inputObject,
-                          sku: e.target.value,
-                        })
-                      }
-                    />
-                  </InputWithLabel>
-                </div>
-                <InputWithLabel label="Stock status">
-                  <SelectInput
-                    selectList={stockStatusList}
-                    value={inputObject.stockStatus}
-                    onChange={(e) =>
-                      setInputObject({
-                        ...inputObject,
-                        stockStatus: e.target.value,
-                      })
-                    }
-                  />
-                </InputWithLabel>
-              </div>
-
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary mt-16">
-                Delivery
-              </h3>
-
-              <div className="mt-4 flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-x-5 gap-y-5 max-[500px]:grid-cols-1 max-[500px]:gap-x-0 max-[500px]:gap-y-5">
-                  <InputWithLabel label="Weight (kg)">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product weight..."
-                      value={inputObject.weight}
-                      onChange={(e) => {
-                        setInputObject({
-                          ...inputObject,
-                          weight: e.target.value,
-                        });
-                      }}
-                    />
-                  </InputWithLabel>
-                  <InputWithLabel label="Length (cm)">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product length..."
-                      value={inputObject.length}
-                      onChange={(e) => {
-                        setInputObject({
-                          ...inputObject,
-                          length: e.target.value,
-                        });
-                      }}
-                    />
-                  </InputWithLabel>
-                  <InputWithLabel label="Width (cm)">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product width..."
-                      value={inputObject.width}
-                      onChange={(e) => {
-                        setInputObject({
-                          ...inputObject,
-                          width: e.target.value,
-                        });
-                      }}
-                    />
-                  </InputWithLabel>
-                  <InputWithLabel label="Height (cm)">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a product height..."
-                      value={inputObject.height}
-                      onChange={(e) => {
-                        setInputObject({
-                          ...inputObject,
-                          height: e.target.value,
-                        });
-                      }}
-                    />
-                  </InputWithLabel>
-                </div>
-              </div>
               <div>
-                <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary mt-16">
-                  SEO
-                </h3>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Product Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                />
+              </div>
 
-                <div className="mt-4 flex flex-col gap-5">
-                  <InputWithLabel label="Meta title">
-                    <SimpleInput
-                      type="text"
-                      placeholder="Enter a meta title..."
-                      value={inputObject.metaTitle}
-                        onChange={(e) =>
-                            setInputObject({
-                            ...inputObject,
-                            metaTitle: e.target.value,
-                            })
-                        }
-                    />
-                  </InputWithLabel>
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                >
+                  <option value="Smartphones & Mobile">Smartphones & Mobile</option>
+                  <option value="Laptops & Workstations">Laptops & Workstations</option>
+                  <option value="Audio & Acoustics">Audio & Acoustics</option>
+                  <option value="Wearables & Smartwatches">Wearables & Smartwatches</option>
+                  <option value="Cameras & Optics">Cameras & Optics</option>
+                </select>
+              </div>
 
-                  <InputWithLabel label="Meta description">
-                    <TextAreaInput
-                      placeholder="Enter a meta description..."
-                      rows={4}
-                      cols={50}
-                      value={inputObject.metaDescription}
-                        onChange={(e) =>
-                            setInputObject({
-                            ...inputObject,
-                            metaDescription: e.target.value,
-                            })
-                        }
-                    />
-                  </InputWithLabel>
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Manufacturer / Brand
+                </label>
+                <input
+                  type="text"
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Description
+                </label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                    Price ($) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                    Stock Status
+                  </label>
+                  <select
+                    value={inStock}
+                    onChange={(e) => setInStock(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500"
+                  >
+                    <option value="1">In Stock</option>
+                    <option value="0">Out of Stock</option>
+                  </select>
                 </div>
               </div>
             </div>
 
-            
-
-            {/* right div */}
-            <div>
-              <h3 className="text-2xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
-                Product images
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold leading-7 dark:text-whiteSecondary text-blackPrimary">
+                Product Image
               </h3>
 
-              <ImageUpload />
-              <div className="flex justify-center gap-x-2 mt-5 flex-wrap">
-                <img src='/src/assets/tablet (1).jpg' alt='' className="w-36 h-32"/>
-                <img src="/src/assets/tablet (2).jpg" alt="" className="w-36 h-32" />
-                <img src='/src/assets/tablet (3).jpg' alt='' className="w-36 h-32"/>
-                <img src="/src/assets/tablet (4).jpg" alt="" className="w-36 h-32" />
+              <div>
+                <label className="block text-sm font-semibold mb-2 dark:text-whiteSecondary text-blackPrimary">
+                  Image URL
+                </label>
+                <input
+                  type="url"
+                  value={mainImage}
+                  onChange={(e) => setMainImage(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded border dark:border-gray-700 border-gray-300 dark:bg-zinc-800 bg-white dark:text-white text-black outline-none focus:border-emerald-500 text-sm"
+                />
+              </div>
+
+              <div className="border dark:border-gray-700 border-gray-300 rounded-lg p-4 dark:bg-zinc-800/40 bg-gray-50 flex flex-col items-center justify-center">
+                <span className="text-xs font-semibold dark:text-gray-400 text-gray-500 mb-3 uppercase tracking-wider">
+                  Image Preview
+                </span>
+                <img
+                  src={mainImage || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600"}
+                  alt="Preview"
+                  className="w-64 h-64 object-cover rounded-lg shadow-md border dark:border-gray-700 border-gray-200"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600";
+                  }}
+                />
               </div>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
 };
+
 export default EditProduct;

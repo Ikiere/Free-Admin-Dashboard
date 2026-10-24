@@ -1,11 +1,8 @@
 // *********************
 // Role of the component: Sidebar component that displays the sidebar navigation
 // Name of the component: Sidebar.tsx
-// Developer: Aleksandar Kuzmanovic
-// Version: 1.0
-// Component call: <Sidebar />
-// Input parameters: roles: no input parameters
-// Output: Sidebar component that displays the sidebar navigation
+// Developer: Aleksandar Kuzmanovic & AccessGlobal
+// Version: 2.0
 // *********************
 
 import { HiLogin, HiOutlineHome, HiUserGroup } from "react-icons/hi";
@@ -14,7 +11,7 @@ import { HiOutlineTag } from "react-icons/hi";
 import { HiOutlineTruck } from "react-icons/hi";
 import { HiOutlineStar } from "react-icons/hi";
 import { HiOutlineInformationCircle } from "react-icons/hi";
-import { HiOutlineChat } from "react-icons/hi";
+import { HiOutlineDatabase } from "react-icons/hi";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { HiOutlineX } from "react-icons/hi";
 import { setSidebar } from "../features/dashboard/dashboardSlice";
@@ -28,7 +25,6 @@ const Sidebar = () => {
   const { isSidebarOpen } = useAppSelector((state) => state.dashboard);
   const dispatch = useAppDispatch();
 
-  // Determine the sidebar class based on isSidebarOpen
   const sidebarClass: string = isSidebarOpen
     ? "sidebar-open"
     : "sidebar-closed";
@@ -123,6 +119,20 @@ const Sidebar = () => {
           >
             <HiOutlineStar className="text-xl" />
             <span className="text-lg">Reviews</span>
+          </NavLink>
+
+          {/* Supabase Safe Database Settings */}
+          <NavLink
+            to="/supabase-settings"
+            className={(isActiveObj) =>
+              isActiveObj.isActive ? navActiveClass : navInactiveClass
+            }
+          >
+            <HiOutlineDatabase className="text-xl text-emerald-400" />
+            <span className="text-lg flex items-center justify-between w-full">
+              <span>Supabase DB</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold uppercase tracking-wider">Safe</span>
+            </span>
           </NavLink>
 
           <div
